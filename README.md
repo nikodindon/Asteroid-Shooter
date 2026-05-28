@@ -40,10 +40,18 @@ Un clone moderne d'Asteroids, développé feature par feature en sprints itérat
 
 | Touche | Action |
 |--------|--------|
+| `Entrée` | Démarrer / retour au menu |
 | `←` `→` | Rotation du vaisseau |
 | `↑` | Propulsion (avec inertie) |
 | `Espace` | Tirer |
 | `R` | Rejouer (après Game Over) |
+
+### Lancer le jeu
+
+```bash
+pip install pygame numpy
+python main.py
+```
 
 ---
 
@@ -77,18 +85,24 @@ Un clone moderne d'Asteroids, développé feature par feature en sprints itérat
 - Explosion grande : bruit blanc filtré, fréquence descendante 200→30Hz (0.3s)
 - Explosion petite : idem, 300→50Hz (0.15s)
 - Perte de vie : sinusoïde grave descendante 400→80Hz (0.4s)
-- Conversion `numpy.ndarray` → `pygame.sndarray.make_sound()`
 - Fix bug stéréo : arrays 1D → 2D via `np.column_stack((audio, audio))`
 
-### Sprint 5 — Difficulté progressive ✅
+### Sprint 5 — Difficulté progressive
 - Variable `niveau` affichée en haut au centre
 - Tous les 5 astéroïdes détruits (fragments inclus) → niveau +1
 - À chaque niveau : vitesse max +0.3, spawn ×0.95, max simultanés +1
 - Annonce "NIVEAU X" en jaune au centre avec fondu entrant/sortant (2s)
 - Niveau ≥ 5 : 20% de chance d'astéroïdes élites (rougeâtres, vitesse ×1.5)
 
-### Sprint 6 — Refactoring multi-fichiers *(prochain)*
-- Découpage en 7 modules : `constants.py`, `sounds.py`, `entities.py`, `effects.py`, `ui.py`, `levels.py`, `main.py`
+### Sprint 6 — Refactoring multi-fichiers ✅
+- Découpage en 7 modules propres
+- Fix bug invincibilité permanente : logique de clignotement déplacée entièrement dans `mettre_a_jour_invincibilite()`, `dessiner()` ne touche plus au timer
+- Fix imports manquants (`VITESSE_MAX_BASE`, `FPS`) détectés post-refactoring
+
+### Sprint 7 — Highscore + Menu *(prochain)*
+- Écran titre animé avec score pulsant
+- Highscore persistant JSON
+- Retour au menu après Game Over
 
 ---
 
@@ -104,9 +118,8 @@ Un clone moderne d'Asteroids, développé feature par feature en sprints itérat
 
 ### Phase 2 — Profondeur de jeu 🔄
 - [x] Niveaux + difficulté progressive
-- [ ] **Refactoring multi-fichiers** (`entities.py`, `effects.py`, `sounds.py`, `levels.py`, `ui.py`, `constants.py`, `main.py`)
-- [ ] Highscore sauvegardé (fichier JSON)
-- [ ] Écran de menu animé (titre + meilleur score + pulsation)
+- [x] Refactoring multi-fichiers
+- [ ] **Highscore persistant** (JSON) + écran menu animé
 - [ ] Pause avec `P`
 
 ### Phase 3 — Contenu 🎯
@@ -129,7 +142,7 @@ Un clone moderne d'Asteroids, développé feature par feature en sprints itérat
 - [ ] Musique générative procédurale (boucle ambient 8-bit via NumPy)
 - [ ] Son de thrust continu modulé par la vitesse
 - [ ] Variation des sons d'explosion selon la taille de l'astéroïde
-- [ ] Effet sonore de power-up
+- [ ] Effet sonore de power-up et de montée de niveau
 
 ### Phase 6 — Architecture avancée 🏗️
 - [ ] Système de sauvegarde de profil (pseudo + scores)
@@ -143,17 +156,18 @@ Un clone moderne d'Asteroids, développé feature par feature en sprints itérat
 
 ### Ce qui fonctionne bien
 - **Prompts de réécriture complète** + instruction `"écris le fichier immédiatement, sans planifier, sans t'arrêter"` → évite que Qwen tourne en rond dans sa chain-of-thought
-- **Prompts chirurgicaux** pour les petits fixes (ex: le bug stéréo numpy) → rapide et fiable
+- **Prompts chirurgicaux** pour les petits fixes → rapide et fiable, pas besoin de la consigne anti-plantage
 - **Baisser le niveau de thinking** (`shift+tab` dans Pi Dev, passer en `low`) pour les tâches de pure génération de code
 - **`/new`** dans Pi Dev pour repartir sur un contexte frais quand on approche 50% de la fenêtre
+- **Toujours briefer l'état du projet** en début de nouvelle session (`/new`)
 
 ### Pièges à éviter
 - Demander des edits multiples complexes → Qwen se perd dans la planification et s'arrête à mi-chemin
 - Fichier unique trop long → préférer le multi-fichiers au-delà de ~500 lignes
 - Trop de features dans un seul prompt → une feature bien faite vaut mieux que trois à moitié
-- Oublier le résumé du projet en contexte frais (`/new`) → toujours briefer l'état actuel
+- Après un refactoring multi-fichiers → toujours vérifier les imports manquants en lançant le jeu
 
-### Template de prompt optimal (réécriture)
+### Template de prompt optimal (réécriture complète)
 ```
 Le fichier [nom].py est un jeu [description courte]. Il contient : [liste features].
 Réécris-le entièrement en ajoutant [feature précise].
@@ -163,51 +177,37 @@ write, sans planifier, sans expliquer, sans t'arrêter. Une seule passe, du déb
 à if __name__ == "__main__": main(). Ne t'interromps pas.
 ```
 
-### Template de prompt optimal (fix chirurgical)
+### Template de prompt optimal (edit chirurgical)
 ```
 Dans [fichier].py, [description précise du changement].
-Ne touche à rien d'autre. Fais ces modifications avec l'outil edit, pas de réécriture complète.
+Fais le edit immédiatement sans planifier.
+```
+
+### Template de prompt optimal (multi-fichiers, nouvelle session)
+```
+Le jeu Asteroid Shooter est découpé en : [liste fichiers + rôle].
+Il fonctionne bien. Modifie uniquement [fichiers concernés] pour ajouter [feature].
+[Description précise]
+Écris chaque fichier modifié immédiatement avec l'outil edit ou write,
+sans planifier, sans expliquer, sans t'arrêter.
 ```
 
 ---
 
-## 🏛️ Architecture cible (multi-fichiers)
-
-Migration Sprint 6 :
+## 🏛️ Architecture actuelle
 
 ```
 asteroid_shooter/
-├── main.py          # boucle principale, init, game states
+├── main.py          # boucle principale, game states, collisions
 ├── entities.py      # Vaisseau, Balle, Asteroide
 ├── effects.py       # Particule, TexteScore, TexteNiveau, generer_etoiles()
 ├── sounds.py        # génération procédurale numpy
-├── levels.py        # calculer_parametres_niveau(), logique montée de niveau
+├── levels.py        # calculer_parametres_niveau()
 ├── constants.py     # toutes les constantes centralisées
-└── ui.py            # HUD, menus, game over screen
+├── ui.py            # HUD, menu, game over screen
+├── highscore.py     # lecture/écriture JSON ← à venir sprint 7
+└── highscore.json   # données persistantes ← à venir sprint 7
 ```
-
----
-
-## 🛠️ Installation
-
-```bash
-# Cloner le repo
-git clone https://github.com/[ton-pseudo]/asteroid-shooter-llm
-cd asteroid-shooter-llm
-
-# Installer les dépendances
-pip install pygame numpy
-
-# Lancer le jeu
-python main.py        # après refactoring Sprint 6
-# ou
-python asteroid_shooter.py  # avant refactoring
-```
-
-**Dépendances :**
-- Python 3.10+
-- pygame-ce 2.5+
-- numpy
 
 ---
 
@@ -215,10 +215,10 @@ python asteroid_shooter.py  # avant refactoring
 
 | Métrique | Valeur |
 |----------|--------|
-| Lignes de code | ~750 |
-| Sprints complétés | 5 |
+| Lignes de code | ~800 (multi-fichiers) |
+| Sprints complétés | 6 |
+| Bugs résolus par prompt | 3 (stéréo numpy, imports manquants, invincibilité permanente) |
 | Lignes écrites à la main | 0 |
-| Bugs résolus par prompt | 1 (stéréo numpy) |
 | Modèle local utilisé | Qwen3.6 35B |
 | Harness | Pi Dev 0.74 |
 

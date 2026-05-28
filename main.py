@@ -3,12 +3,14 @@ Asteroid Shooter — Boucle principale et initialisation.
 """
 
 import pygame
+import math
 from constants import LARGEUR, HAUTEUR, FPS, TITRE, BLANC, RAYON_VAISSEAU
 from sounds import initialiser_sons
 from entities import Vaisseau, Balle, Asteroide
 from effects import Particule, TexteScore, TexteNiveau, generer_etoiles
-from ui import dessiner_triangles_vies, afficher_game_over_complet, dessiner_hud
+from ui import dessiner_triangles_vies, afficher_game_over_complet, dessiner_hud, afficher_menu
 from levels import calculer_parametres_niveau
+from highscore import charger_highscore, sauvegarder_highscore
 
 
 def detecter_collision_cercle(cercle1, cercle2):
@@ -49,7 +51,11 @@ def main():
     police_texte_score = pygame.font.SysFont(None, 24)
     police_niveau = pygame.font.SysFont(None, 72)
 
+    highscore = charger_highscore()
+    menu_frame = 0
+
     vaisseau, balles, asteroides, particules, textes_score, textes_niveau, score, vies, niveau, asteroides_tues, frames, game_over = reinitialiser()
+    etat = "menu"  # "menu", "jeu", "game_over"
 
     while True:
         for event in pygame.event.get():
@@ -57,10 +63,22 @@ def main():
                 pygame.quit()
                 return
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r and game_over:
+                if event.key == pygame.K_r and etat == "game_over":
                     vaisseau, balles, asteroides, particules, textes_score, textes_niveau, score, vies, niveau, asteroides_tues, frames, game_over = reinitialiser()
+                    etat = "jeu"
+                if event.key == pygame.K_RETURN and etat == "menu":
+                    vaisseau, balles, asteroides, particules, textes_score, textes_niveau, score, vies, niveau, asteroides_tues, frames, game_over = reinitialiser()
+                    etat = "jeu"
 
-        if game_over:
+        if etat == "menu":
+            afficher_menu(ecran, etoiles, police_jeu, police_score, police_info,
+                          highscore, menu_frame)
+            menu_frame += 1
+            pygame.display.flip()
+            horloge.tick(FPS)
+            continue
+
+        if etat == "game_over":
             afficher_game_over_complet(ecran, etoiles, vaisseau, balles, asteroides,
                                        particules, score, police_jeu, police_score, police_info)
             pygame.display.flip()
@@ -168,7 +186,9 @@ def main():
                     particules.append(Particule(points[0], points[1]))
                 son_perte_vie.play()
                 if vies <= 0:
-                    game_over = True
+                    if sauvegarder_highscore(score):
+                        highscore = score
+                    etat = "game_over"
                 else:
                     vaisseau.teleporter(LARGEUR // 2, HAUTEUR // 2)
                     vaisseau.activer_invincibilite()
@@ -187,7 +207,8 @@ def main():
         # --- Rendu ---
         dessiner_hud(ecran, vaisseau, balles, asteroides, particules,
                      textes_score, textes_niveau, score, vies, niveau,
-                     police_texte_score, police_niveau, etoiles, frames)
+                     police_texte_score, police_niveau, etoiles, frames,
+                     highscore)
 
         pygame.display.flip()
         horloge.tick(FPS)

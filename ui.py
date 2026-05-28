@@ -1,9 +1,10 @@
 """
-Interface utilisateur : HUD, triangles de vies, écran game over.
+Interface utilisateur : HUD, triangles de vies, écran game over, menu.
 """
 
 import pygame
-from constants import LARGEUR, HAUTEUR, BLANC, NOIR
+import math
+from constants import LARGEUR, HAUTEUR, BLANC, NOIR, FPS
 
 
 def dessiner_triangles_vies(surface, vies):
@@ -55,7 +56,8 @@ def afficher_game_over_complet(ecran, etoiles, vaisseau, balles, asteroides,
 
 def dessiner_hud(ecran, vaisseau, balles, asteroides, particules,
                  textes_score, textes_niveau, score, vies, niveau,
-                 police_texte_score, police_niveau, etoiles, frame):
+                 police_texte_score, police_niveau, etoiles, frame,
+                 highscore=0):
     ecran.fill(NOIR)
     for ex, ey, es in etoiles:
         ecran.set_at((ex, ey), BLANC)
@@ -75,9 +77,34 @@ def dessiner_hud(ecran, vaisseau, balles, asteroides, particules,
     police = pygame.font.SysFont(None, 28)
     texte_score = police.render(f"Score : {score}", True, BLANC)
     ecran.blit(texte_score, (10, 10))
+    if highscore > 0:
+        texte_highscore = police.render(f"Meilleur : {highscore}", True, BLANC)
+        ecran.blit(texte_highscore, (10, 38))
 
     texte_niveau = police.render(f"Niveau : {niveau}", True, BLANC)
     rect_niveau = texte_niveau.get_rect(center=(LARGEUR // 2, 15))
     ecran.blit(texte_niveau, rect_niveau)
 
     dessiner_triangles_vies(ecran, vies)
+
+
+def afficher_menu(ecran, etoiles, police_jeu, police_score, police_info,
+                  highscore, frame):
+    ecran.fill(NOIR)
+    for ex, ey, es in etoiles:
+        ecran.set_at((ex, ey), BLANC)
+
+    titre = police_jeu.render("ASTEROID SHOOTER", True, BLANC)
+    titre_rect = titre.get_rect(center=(LARGEUR // 2, HAUTEUR // 2 - 100))
+    ecran.blit(titre, titre_rect)
+
+    meilleur = police_score.render(f"Meilleur score : {highscore}", True, BLANC)
+    meilleur_rect = meilleur.get_rect(center=(LARGEUR // 2, HAUTEUR // 2 - 30))
+    ecran.blit(meilleur, meilleur_rect)
+
+    pulse = 255 * (0.5 + 0.5 * math.sin(frame * 0.05))
+    alpha = int(pulse)
+    texte_start = police_info.render("Appuie sur ENTRÉE pour jouer", True, BLANC)
+    texte_start.set_alpha(alpha)
+    start_rect = texte_start.get_rect(center=(LARGEUR // 2, HAUTEUR // 2 + 40))
+    ecran.blit(texte_start, start_rect)

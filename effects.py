@@ -5,7 +5,7 @@ Effets visuels : particules, textes animés, étoiles en fond.
 import pygame
 import random
 import math
-from constants import LARGEUR, HAUTEUR, BLANC
+from constants import LARGEUR, HAUTEUR, BLANC, FPS
 
 
 class Particule:
@@ -60,8 +60,8 @@ class TexteScore:
 class TexteNiveau:
     def __init__(self, niveau):
         self.niveau = niveau
-        self.vie = 60 * 2  # FPS * 2
-        self.max_vie = 60 * 2
+        self.vie = FPS * 2
+        self.max_vie = FPS * 2
         self.alpha = 0
         self.alpha_max = 255
         self.fade_in = True
@@ -73,8 +73,8 @@ class TexteNiveau:
             if self.alpha >= self.alpha_max:
                 self.alpha = self.alpha_max
                 self.fade_in = False
-        if self.vie < 60:
-            ratio = self.vie / 60
+        if self.vie < FPS:
+            ratio = self.vie / FPS
             self.alpha = int(self.alpha_max * ratio)
 
     def est_mort(self):

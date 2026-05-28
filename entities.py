@@ -7,7 +7,8 @@ import random
 import math
 from constants import (
     LARGEUR, HAUTEUR, FPS, VITESSE_ROTATION, PUISSANCE, FRICTION,
-    RAYON_VAISSEAU, VITESSE_BALLE, VIE_BALLE, ROUGE_ASTEROIDE, GRIS, GRIS_CLAIR, BLANC
+    RAYON_VAISSEAU, VITESSE_BALLE, VIE_BALLE, ROUGE_ASTEROIDE, GRIS, GRIS_CLAIR, BLANC,
+    VITESSE_MAX_BASE
 )
 
 
@@ -46,16 +47,8 @@ class Vaisseau:
         )
 
     def dessiner(self, surface):
-        if self.invincible:
-            if self.blink_timer < FPS // 4:
-                self.blink_on = True
-            elif self.blink_timer < FPS // 2:
-                self.blink_on = False
-            else:
-                self.blink_timer = 0
-                self.blink_on = True
-            if not self.blink_on:
-                return
+        if self.invincible and not self.blink_on:
+            return
         pygame.draw.polygon(surface, BLANC, self.obtenir_points(), 2)
 
     def dessiner_flamme(self, surface, frame):
@@ -82,6 +75,7 @@ class Vaisseau:
     def mettre_a_jour_invincibilite(self):
         if self.invincible:
             self.blink_timer += 1
+            self.blink_on = (self.blink_timer // 8) % 2 == 0
             if self.blink_timer >= FPS * 2:
                 self.invincible = False
                 self.blink_timer = 0
