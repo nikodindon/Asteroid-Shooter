@@ -9,7 +9,7 @@ from constants import LARGEUR, HAUTEUR, BLANC, FPS
 
 
 class Particule:
-    def __init__(self, x, y):
+    def __init__(self, x, y, couleur=None):
         self.x = x
         self.y = y
         angle = random.uniform(0, 2 * math.pi)
@@ -19,10 +19,16 @@ class Particule:
         self.vie = random.randint(30, 45)
         self.max_vie = self.vie
         self.taille = random.randint(2, 4)
-        if random.random() < 0.5:
-            self.r, self.g, self.b = 255, 255, 0
+        if couleur is not None:
+            r = max(0, min(255, couleur[0] + random.randint(-30, 30)))
+            g = max(0, min(255, couleur[1] + random.randint(-30, 30)))
+            b = max(0, min(255, couleur[2] + random.randint(-30, 30)))
+            self.couleur = (r, g, b)
         else:
-            self.r, self.g, self.b = 255, 140, 0
+            if random.random() < 0.5:
+                self.couleur = (255, 255, 0)
+            else:
+                self.couleur = (255, 140, 0)
 
     def mettre_a_jour(self):
         self.x += self.vx
@@ -33,7 +39,7 @@ class Particule:
         return self.vie <= 0
 
     def dessiner(self, surface):
-        pygame.draw.circle(surface, (self.r, self.g, self.b),
+        pygame.draw.circle(surface, self.couleur,
                            (int(self.x), int(self.y)), self.taille)
 
 
